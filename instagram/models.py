@@ -24,10 +24,19 @@ class Image(ApiModel):
         return "Image: %s" % self.url
 
 
-class Video(Image):
+# PFW
+# ---------
+#Add this class as well for the videos....
+class Video(ApiModel):
+
+    def __init__(self, url, width, height):
+        self.url = url
+        self.height = height
+        self.width = width
 
     def __unicode__(self):
         return "Video: %s" % self.url
+# ---------
 
 
 class Media(ApiModel):
@@ -38,21 +47,7 @@ class Media(ApiModel):
             setattr(self, key, value)
 
     def get_standard_resolution_url(self):
-        if self.type == 'image':
-            return self.images['standard_resolution'].url
-        else:
-            return self.videos['standard_resolution'].url
-
-    def get_low_resolution_url(self):
-        if self.type == 'image':
-            return self.images['low_resolution'].url
-        else:
-            return self.videos['low_resolution'].url
-
-
-    def get_thumbnail_url(self):
-        return self.images['thumbnail'].url
-
+        return self.images['standard_resolution'].url
 
     def __unicode__(self):
         return "Media: %s" % self.id
@@ -60,18 +55,11 @@ class Media(ApiModel):
     @classmethod
     def object_from_dictionary(cls, entry):
         new_media = Media(id=entry['id'])
-        new_media.type = entry['type']
 
         new_media.user = User.object_from_dictionary(entry['user'])
-
         new_media.images = {}
         for version, version_info in entry['images'].iteritems():
             new_media.images[version] = Image.object_from_dictionary(version_info)
-
-        if new_media.type == 'video':
-            new_media.videos = {}
-            for version, version_info in entry['videos'].iteritems():
-                new_media.videos[version] = Video.object_from_dictionary(version_info)
 
         if 'user_has_liked' in entry:
             new_media.user_has_liked = entry['user_has_liked']
@@ -103,6 +91,17 @@ class Media(ApiModel):
         new_media.link = entry['link']
 
         new_media.filter = entry.get('filter')
+
+        # PFW
+        #-----------
+        # add the videos
+        if "videos" in entry:
+            new_media.videos = {}
+            for version, version_info in entry['videos'].iteritems():
+                new_media.videos[version] = Video.object_from_dictionary(version_info)
+        #add the type
+        new_media.type = entry.get('type')
+        #-----------
 
         return new_media
 
